@@ -1,20 +1,20 @@
 document.addEventListener("DOMContentLoaded", function () {
   let checkBox = document.getElementById("consent");
-  let checkBoxAlt = document.getElementById("consent-alt");
   let nextBtn = document.getElementById("submit-button");
-  let nextBtnAlt = document.getElementById("submit-button-alt");
   let inst1 = document.getElementById("instructions-one");
   let inst2 = document.getElementById("instructions-two");
   let instructionsBtn = document.getElementById("instructions-button");
-  let debriefBtn = document.getElementById("debrief-button");
-  let debriefBtnAlt = document.getElementById("debrief-button-alt");
-  let debriefText = document.getElementById("debrief-text");
-  let debriefTextAlt = document.getElementById("debrief-text-alt");
-  let code = document.getElementById("code");
-  let codeAlt = document.getElementById("code-alt");
   let subjectPool = false;
   let surveyURL = "https://csunsbs.qualtrics.com/jfe/form/SV_3x6RlSMHJp3rtQy?ID=";
-  let test = "s1.3.mm";
+  let test = "s1_3_mm";
+  let randFace1;
+  let randFace2;
+  let temp;
+  let temp2;
+  let temp3;
+  let temp4;
+  let count = 0;
+  let ratingsArr = [];
 
     if (checkBox) {
       checkBox.onchange = function () {
@@ -132,7 +132,7 @@ document.addEventListener("DOMContentLoaded", function () {
   pairs(faces);
 
   //firebase config
-  var primaryDB = {
+  var firebaseConfig = {
     apiKey: "AIzaSyARjmqlMf7UhFA8buKB5OIQ2VreaqMz4l0",
     authDomain: "facestudy-7aa90.firebaseapp.com",
     databaseURL: "https://facestudy-7aa90.firebaseio.com",
@@ -145,8 +145,7 @@ document.addEventListener("DOMContentLoaded", function () {
   //Initialize firebase
   const primaryDB = firebase.initializeApp(firebaseConfig);
 
-  // Initialize Firebase
-  let primaryDB = firebase.initializeApp(firebaseConfig);
+  
   firebase.analytics();
 
   let today = new Date();
@@ -167,33 +166,35 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  let count = 0;
-  let temp = [0,0];
-  let ratingsArr = [];
   let buttons = document.getElementsByClassName("rating-btn");
-  let pair = [0,0];
-  let counter = 0;
-  let pairIndex;
 
   function loadFaces() {
     faceOneDiv = document.getElementById("face-one");
     faceTwoDiv = document.getElementById("face-two");
 
-    do{
-      pairIndex = Math.floor(Math.random() * facePairs.length);
-      console.log("Length: " + facePairs.length);
-      console.log("index: " + pairIndex);
-      pair = facePairs[pairIndex];
-      console.log(pair[0] + " " + temp[0] + "-----" + pair[1] + " " + temp[1]);
-      counter++;
-      console.log(counter)
-      if(counter == facePairs.length){
-        break;
-      }
-    } while (pair[0] === temp[0] || pair[0] === temp[1] || pair[1] === temp[0] || pair[1] === temp[1]);
+    do {
+      randFace1 = Math.floor(Math.random() * 32);
+    } while (
+      randFace1 === temp ||
+      randFace1 === temp2 ||
+      randFace1 === temp3 ||
+      randFace1 === temp4
+    );
 
-    temp = pair;
-    counter = 0;
+    do {
+      randFace2 = Math.floor(Math.random() * 32);
+    } while (
+      randFace1 === randFace2 ||
+      randFace2 === temp ||
+      randFace2 === temp2 ||
+      randFace2 === temp3 ||
+      randFace2 === temp4
+    );
+
+    temp3 = temp;
+    temp4 = temp2;
+    temp = randFace1;
+    temp2 = randFace2;
 
     if (!faceOneDiv.firstElementChild || !faceTwoDiv.firstElementChild) {
       faceOneEl = document.createElement("img");
@@ -201,8 +202,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
       faceOneEl.setAttribute("id", "face-1");
       faceTwoEl.setAttribute("id", "face-2");
-      faceOneEl.setAttribute("src", pair[0]); 
-      faceTwoEl.setAttribute("src", pair[1]); 
+      faceOneEl.setAttribute("src", faces[randFace1]);
+      faceTwoEl.setAttribute("src", faces[randFace2]);
       faceOneEl.setAttribute("class", "img-fluid mx-auto d-block");
       faceTwoEl.setAttribute("class", "img-fluid mx-auto d-block");
 
@@ -212,11 +213,9 @@ document.addEventListener("DOMContentLoaded", function () {
       faceOne = document.getElementById("face-1");
       faceTwo = document.getElementById("face-2");
 
-      faceOneEl.setAttribute("src", pair[0]);
-      faceTwoEl.setAttribute("src", pair[1]);
+      faceOneEl.setAttribute("src", faces[randFace1]);
+      faceTwoEl.setAttribute("src", faces[randFace2]);
     }
-
-    facePairs.splice(pairIndex, 1);
   }
 
   function disableButtons() {
@@ -226,91 +225,45 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  for (let i = 0; i < buttons.length; i++) {
-    let button = buttons[i];
-    button.onclick = function () {
-      let rating = new FaceRating(
-        pair[0].substring(16),
-        pair[1].substring(16),
-        parseInt(button.innerHTML),
-        id,
-        test
-      );
-      ratingsArr.push(rating);
+  const buttonSetup = function () {
+    for (let i = 0; i < buttons.length; i++) {
+      let button = buttons[i];
+      button.onclick = function () {
+        let rating = new FaceRating(
+          faces[randFace1].substring(16),
+          faces[randFace2].substring(16),
+          parseInt(button.innerHTML),
+          id,
+          test,
+          subjectPool
+        );
+        ratingsArr.push(rating);
 
-      if (facePairs.length > 0) { 
-        //239
-        count++;
-        console.log(count);
-        loadFaces();
-      } else {
-        disableButtons();
-        ratingsArr.forEach(function (element) {
-          element.test = test;
-          element.subjectPool = subjectPool;
-        });
-        writeToDBs()
-      }
+        if (count < 119) {
+          //119
+          count++;
+          loadFaces();
+        } else {
+          disableButtons();
+          writeToDBs();
+        }
+      };
     };
-  }
-
-  let form = document.getElementById("form");
-  surveyURL = localStorage.getItem('surveyURL');
+  };
   
-  let debrief = surveyURL + id + "&study=" + test;
-
-  let errorCode = 2;
-
   function writeToDBs() {
-    if (errorCode == 2) {
-      secondaryDB
-        .database()
-        .ref(test + "/" + todayString + "/" + id)
-        .set(ratingsArr)
-        .then(function () {
-          newUserRef
-            .set(ratingsArr)
-            .then(function () {
-              console.log("boop");
-              console.log(debrief);
-              localStorage.clear()
-              window.location.href = debrief;
-            })
-            .catch(function (error) {
-              console.log(error);
-              alert(
-                "There was an error with your submission. Trying again. (error code 1)"
-              );
-              errorCode = 1;
-              writeToDBs();
-            });
-        })
-        .catch(function (error) {
-          alert(
-            "There was an error with your submission. Trying again. (error code 2)"
-          );
-          errorCode = 2;
-          writeToDBs();
-        });
-    }
-
-    if (errorCode == 1) {
-      newUserRef
-        .set(ratingsArr)
-        .then(function () {
-          form.reset();
-          localStorage.clear();
-          window.location.href = debrief;
-        })
-        .catch(function (error) {
-          alert(
-            "There was an error with your submission. Trying again. (error code 1)"
-          );
-          errorCode = 1;
-          writeToDBs();
-        });
-    }
+    newUserRef
+      .set(ratingsArr)
+      .then(function () {
+        window.location.href = surveyURL + "ID=" + id + "&study=" + test;
+      })
+      .catch(function (error) {
+        console.log(error);
+        alert("There was an error with your submission. Trying again.");
+        writeToDBs();
+      });
   }
 
+  buttonSetup();
   loadFaces();
 });
