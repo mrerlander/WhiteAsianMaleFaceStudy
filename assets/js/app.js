@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let inst2 = document.getElementById("instructions-two");
   let instructionsBtn = document.getElementById("instructions-button");
   let subjectPool = false;
-  let surveyURL = "https://csunsbs.qualtrics.com/jfe/form/SV_3x6RlSMHJp3rtQy?ID=";
+  let surveyURL = "https://csunsbs.qualtrics.com/jfe/form/SV_3x6RlSMHJp3rtQy?";
   let test = "s1_3_mm";
   let randFace1;
   let randFace2;
