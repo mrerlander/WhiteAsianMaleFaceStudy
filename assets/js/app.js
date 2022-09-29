@@ -4,6 +4,10 @@ document.addEventListener("DOMContentLoaded", function () {
   let inst1 = document.getElementById("instructions-one");
   let inst2 = document.getElementById("instructions-two");
   let instructionsBtn = document.getElementById("instructions-button");
+  const faceOneDiv = document.getElementById("face-one");
+  const faceTwoDiv = document.getElementById("face-two");
+  const buttons = document.getElementsByClassName("rating-btn");
+  const urlParams = new URLSearchParams(window.location.search);
   let subjectPool = false;
   let surveyURL = "https://csunsbs.qualtrics.com/jfe/form/SV_3x6RlSMHJp3rtQy?";
   let test = "s1_3_mm";
@@ -16,15 +20,26 @@ document.addEventListener("DOMContentLoaded", function () {
   let count = 0;
   let ratingsArr = [];
 
-    if (checkBox) {
-      checkBox.onchange = function () {
-        if (this.checked) {
-          nextBtn.disabled = false;
-        } else {
-          nextBtn.disabled = true;
-        }
-      };
+  if (document.URL.includes("face-study-am") && !localStorage.getItem("csun")) {
+    if (!localStorage.getItem("consent")) {
+      if (!localStorage.getItem("subjectPool")) {
+        window.location.href = "index.html";
+        localStorage.setItem("csun", "true")
+        surveyURL = "https://csunsbs.qualtrics.com/jfe/form/SV_3x6RlSMHJp3rtQy"
+        test = "s1.3.mm"
+      } 
     }
+  }
+
+  if (checkBox) {
+    checkBox.onchange = function () {
+      if (this.checked) {
+        nextBtn.disabled = false;
+      } else {
+        nextBtn.disabled = true;
+      }
+    };
+  }
 
   if (nextBtn) {
     nextBtn.addEventListener("click", function (e) {
@@ -114,22 +129,8 @@ document.addEventListener("DOMContentLoaded", function () {
     "./assets/images/CFD-WM-242-011-N.jpg",
     "./assets/images/CFD-WM-247-084-N.jpg"
   ];
+  
 
-  facePairs = [];
-
-  function pairs(arr){
-    let l = arr.length;
-
-    for(let i = 0; i < l; i++){
-      for(let j = i + 1; j < l; j++){
-        facePairs.push([arr[i], arr[j]]);
-        facePairs.push([arr[j], arr[i]]);
-      }
-    }
-    console.log("Original facePairs length: " + facePairs.length)
-  }
-
-  pairs(faces);
 
   //firebase config
   var firebaseConfig = {
@@ -145,35 +146,27 @@ document.addEventListener("DOMContentLoaded", function () {
   //Initialize firebase
   const primaryDB = firebase.initializeApp(firebaseConfig);
 
-  
-  firebase.analytics();
-
-  let today = new Date();
-  let todayString = today.toDateString();
-
-  let refPrimary = primaryDB.database().ref(test + "/" + todayString);
-  let newUserRef = refPrimary.push();
-
-  let id = newUserRef.key;
+  //firebase ref
+  const today = new Date();
+  const todayString = today.toDateString();
+  const refPrimary = primaryDB.database().ref(test + '/' + todayString);
+  const newUserRef = refPrimary.push();
+  const id = newUserRef.key;
 
   class FaceRating {
-    constructor(face1, face2, rating, id, test) {
+    constructor(face1, face2, rating, id, test, subjectPool) {
       this.firstFace = face1;
       this.secondFace = face2;
       this.rating = rating;
       this.id = id;
       this.test = test;
+      this.subjectPool = subjectPool;
     }
   }
 
-  let buttons = document.getElementsByClassName("rating-btn");
-
-  function loadFaces() {
-    faceOneDiv = document.getElementById("face-one");
-    faceTwoDiv = document.getElementById("face-two");
-
+  const loadFaces = function () {
     do {
-      randFace1 = Math.floor(Math.random() * 32);
+      randFace1 = Math.floor(Math.random() * 64);
     } while (
       randFace1 === temp ||
       randFace1 === temp2 ||
@@ -182,7 +175,7 @@ document.addEventListener("DOMContentLoaded", function () {
     );
 
     do {
-      randFace2 = Math.floor(Math.random() * 32);
+      randFace2 = Math.floor(Math.random() * 64);
     } while (
       randFace1 === randFace2 ||
       randFace2 === temp ||
@@ -216,14 +209,7 @@ document.addEventListener("DOMContentLoaded", function () {
       faceOneEl.setAttribute("src", faces[randFace1]);
       faceTwoEl.setAttribute("src", faces[randFace2]);
     }
-  }
-
-  function disableButtons() {
-    for (let i = 0; i < buttons.length; i++) {
-      let button = buttons[i];
-      button.setAttribute("disabled", true);
-    }
-  }
+  };
 
   const buttonSetup = function () {
     for (let i = 0; i < buttons.length; i++) {
@@ -250,7 +236,14 @@ document.addEventListener("DOMContentLoaded", function () {
       };
     };
   };
-  
+
+  const disableButtons = function() {
+    for (let i = 0; i < buttons.length; i++) {
+      let button = buttons[i];
+      button.setAttribute("disabled", true);
+    }
+  }
+
   function writeToDBs() {
     newUserRef
       .set(ratingsArr)
